@@ -1,0 +1,6 @@
+*.key
+*.pyc
+*.crt
+tmp.conf
+certs/
+mongo-data/
