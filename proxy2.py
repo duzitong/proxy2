@@ -73,8 +73,13 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         with self.lock:
             if not os.path.isfile(certpath):
                 epoch = "%d" % (time.time() * 1000)
-                p1 = Popen(["openssl", "req", "-new", "-key", self.certkey, "-subj", "/CN=%s" % hostname], stdout=PIPE)
-                p2 = Popen(["openssl", "x509", "-req", "-days", "3650", "-CA", self.cacert, "-CAkey", self.cakey, "-set_serial", epoch, "-out", certpath], stdin=p1.stdout, stderr=PIPE)
+                # with open('/etc/ssl/openssl.cnf') as f:
+                #     conf = f.read()
+                conf = 'subjectAltName=DNS:%s\n' % hostname
+                with open('tmp.conf', 'w') as f:
+                    f.write(conf)
+                p1 = Popen(["openssl", "req", "-new", "-key", self.certkey, "-subj", "/CN=%s" % hostname, '-sha256'], stdout=PIPE)
+                p2 = Popen(["openssl", "x509", "-req", '-extfile', 'tmp.conf', "-days", "3650", "-CA", self.cacert, "-CAkey", self.cakey, "-set_serial", epoch, "-sha256", "-out", certpath], stdin=p1.stdout, stderr=PIPE)
                 p2.communicate()
 
         self.wfile.write("%s %d %s\r\n" % (self.protocol_version, 200, 'Connection Established'))
